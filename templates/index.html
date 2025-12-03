@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediCare - Sistem Analisis Risiko Diabetes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3><i class="fas fa-lock"></i> File Terkunci</h3>
+        <p>Rekam medis PDF ini dilindungi password. Silakan masukkan password untuk melanjutkan.</p>
+        <div class="input-wrapper">
+            <input type="password" id="pdfPasswordInput" placeholder="Masukkan Password PDF">
+        </div>
+        <button id="submitPasswordBtn" class="cta-button" style="margin-top: 1rem;">Buka File</button>
+        <p id="passwordError" style="color: red; display: none; margin-top: 10px; font-size: 0.9rem;"></p>
+    </div>
+</div>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">
+            <i class="fas fa-heartbeat"></i>
+            <span>MediCare<span class="logo-sub">Analytics</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#analisis" class="active"><i class="fas fa-chart-line"></i> Analisis</a>
+            <a href="#hasil-analisis"><i class="fas fa-info-circle"></i> Tentang</a>
+        </div>
+    </div>
+</nav>
+
+<div class="hero">
+    <div class="hero-content">
+        <h1>Sistem Analisis Risiko Diabetes</h1>
+        <p class="subtitle">Platform diagnostik berbasis AI untuk deteksi dini dan penilaian risiko diabetes melitus</p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <i class="fas fa-users"></i>
+                <span class="stat-number">768+</span>
+                <span class="stat-label">Data Pasien</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-brain"></i>
+                <span class="stat-number">95%</span>
+                <span class="stat-label">Akurasi Model</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="main-layout">
+        
+        <div class="input-panel" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-pdf"></i>
+                    <h2>Upload Rekam Medis (Opsional)</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <div class="input-wrapper">
+                        <label>Pilih File PDF Rekam Medis</label>
+                        <input type="file" id="pdfUpload" accept="application/pdf" style="padding: 0.5rem;">
+                    </div>
+                    <div id="uploadStatus" style="margin-top: 1rem; font-weight: 500; color: var(--primary-color);"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-panel" id="analisis">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-user-md"></i>
+                    <h2>Data Klinis Pasien</h2>
+                </div>
+
+                <div style="padding: 1rem 2rem; background-color: #f0f7ff; border-bottom: 1px solid #cce5ff; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h4 style="margin: 0; color: #0056b3;"><i class="fab fa-bluetooth"></i> Koneksi Alat Medis</h4>
+                            <small style="color: #555;">Support: Omron Tensi, Timbangan Digital, & <b>Accu-Chek (Gula)</b></small>
+                        </div>
+                        <button type="button" id="btn-scan-ble" class="cta-button" style="background-color: #007bff; padding: 0.6rem 1.2rem;">
+                            <i class="fas fa-search-location"></i> Scan & Connect
+                        </button>
+                    </div>
+                    <p id="ble-status" style="font-size: 0.9rem; margin-top: 8px; color: #333; font-style: italic;"></p>
+                </div>
+
+                <form id="prediction-form" style="padding: 0 2rem 2rem 2rem;">
+                    <div class="form-row">
+                        
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="height">Tinggi Badan (cm)</label>
+                                <input type="number" id="height" name="height" required placeholder="Contoh: 170"> 
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="weight">Berat Badan (kg)</label>
+                                <input type="number" id="weight" name="weight" required placeholder="Contoh: 65">
+                                <small style="color: #00B14F; display:none; font-weight:bold;" id="weight-source">
+                                    <i class="fas fa-check-circle"></i> Data dari Bluetooth
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="bmi_display">BMI Terhitung (kg/m²)</label>
+                                <input type="text" id="bmi_display" disabled placeholder="Otomatis terisi..." 
+                                    style="background-color: #e9ecef; font-weight: bold; color: #333;">
+                                <input type="hidden" id="BMI_hidden" name="BMI">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="BloodPressure">Tekanan Darah (mmHg)</label>
+                                <input type="number" step="any" id="BloodPressure" name="BloodPressure" required placeholder="Contoh: 120">
+                                <small style="color: #00B14F; display:none; font-weight:bold;" id="bp-source">
+                                    <i class="fas fa-check-circle"></i> Data dari Bluetooth
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="Glucose">Glukosa (mg/dL)</label>
+                                <input type="number" step="any" id="Glucose" name="Glucose" required placeholder="Contoh: 100">
+                                <small style="color: #00B14F; display:none; font-weight:bold;" id="glucose-source">
+                                    <i class="fas fa-check-circle"></i> Data dari Bluetooth (Accu-Chek)
+                                </small>
+                            </div>
+                        </div>
+                        
+                         <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="Cholesterol">Kolesterol (mg/dL)</label>
+                                <input type="number" id="Cholesterol" name="Cholesterol" required value="200">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="Pregnancies">Jumlah Kehamilan</label>
+                                <input type="number" id="Pregnancies" name="Pregnancies" required min="0" value="0">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="SkinThickness">Ketebalan Kulit (mm)</label>
+                                <input type="number" step="any" id="SkinThickness" name="SkinThickness" required value="20">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="Insulin">Insulin (mu U/ml)</label>
+                                <input type="number" step="any" id="Insulin" name="Insulin" required value="79">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="DiabetesPedigreeFunction">Fungsi Silsilah Diabetes</label>
+                                <input type="number" step="0.001" id="DiabetesPedigreeFunction" name="DiabetesPedigreeFunction" required value="0.47">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <label for="Age">Usia (tahun)</label>
+                                <input type="number" id="Age" name="Age" required placeholder="Contoh: 30">
+                            </div>
+                        </div>
+                    
+                    </div>
+                    
+                    <button type="submit" class="cta-button" style="margin-top: 1rem;">
+                        <i class="fas fa-microscope"></i> Analisis Sekarang
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="result-panel" id="hasil-analisis">
+             <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-medical"></i>
+                    <h2>Hasil Diagnosis Klasifikasi</h2>
+                </div>
+                
+                <div id="loading">
+                    <div class="loader"></div>
+                    <p>Sedang Menganalisis Data...</p>
+                </div>
+                
+                <div id="result"></div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<footer class="footer" id="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h3><i class="fas fa-heartbeat"></i> MediCare Analytics</h3>
+            <p>Sistem analisis risiko diabetes berbasis kecerdasan buatan.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 MediCare Analytics.</p>
+    </div>
+</footer> 
+
+<script>
+    // --- 1. SETUP ELEMENT & BMI ---
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const bmiDisplay = document.getElementById('bmi_display');
+    const bmiHidden = document.getElementById('BMI_hidden');
+
+    function updateBMI() {
+        const h = parseFloat(heightInput.value) / 100;
+        const w = parseFloat(weightInput.value);
+        if (h > 0 && w > 0) {
+            const bmi = (w / (h * h)).toFixed(1);
+            bmiDisplay.value = bmi;
+            if(bmiHidden) bmiHidden.value = bmi;
+            
+            if(bmi < 18.5) bmiDisplay.style.color = "#e67e22";
+            else if(bmi <= 24.9) bmiDisplay.style.color = "#00B14F";
+            else bmiDisplay.style.color = "#dc3545";
+        }
+    }
+    
+    if(heightInput && weightInput){
+        heightInput.addEventListener('input', updateBMI);
+        weightInput.addEventListener('input', updateBMI);
+    }
+    window.updateBMI = updateBMI;
+
+    // --- 2. LOGIKA BLUETOOTH (WEB BLUETOOTH API) ---
+    const btnScan = document.getElementById('btn-scan-ble');
+    const statusText = document.getElementById('ble-status');
+    const bpSourceLabel = document.getElementById('bp-source');
+    const weightSourceLabel = document.getElementById('weight-source');
+    const glucoseSourceLabel = document.getElementById('glucose-source'); 
+
+    // UUID Services Standard (GATT)
+    const BLOOD_PRESSURE_SERVICE = 0x1810;
+    const WEIGHT_SCALE_SERVICE = 0x181D;
+    const GLUCOSE_SERVICE = 0x1808;
+
+    // UUID Characteristics
+    const BP_MEASUREMENT_CHAR = 0x2A35;
+    const WEIGHT_MEASUREMENT_CHAR = 0x2A9D;
+    const GLUCOSE_MEASUREMENT_CHAR = 0x2A18; 
+    const RACP_CHAR = 0x2A52; // Record Access Control Point
+
+    if(btnScan) {
+        btnScan.addEventListener('click', async () => {
+            if (!navigator.bluetooth) {
+                alert("Browser tidak mendukung Web Bluetooth. Gunakan Chrome/Edge di Laptop/Android.");
+                return;
+            }
+
+            try {
+                statusText.innerText = "Mencari perangkat...";
+                statusText.style.color = "#0056b3";
+
+                // Scan Device
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { services: [BLOOD_PRESSURE_SERVICE] },
+                        { services: [WEIGHT_SCALE_SERVICE] },
+                        { services: [GLUCOSE_SERVICE] } 
+                    ],
+                    optionalServices: [BLOOD_PRESSURE_SERVICE, WEIGHT_SCALE_SERVICE, GLUCOSE_SERVICE]
+                });
+
+                statusText.innerText = "Terhubung ke: " + device.name + ". Menyiapkan...";
+                
+                const server = await device.gatt.connect();
+                statusText.innerText = "Terkoneksi! Mengambil data...";
+
+                // --- A. CEK GLUKOSA (ACCU-CHEK) ---
+                try {
+                    const service = await server.getPrimaryService(GLUCOSE_SERVICE);
+                    
+                    // 1. Setup Listener Data
+                    const measurementChar = await service.getCharacteristic(GLUCOSE_MEASUREMENT_CHAR);
+                    await measurementChar.startNotifications();
+                    measurementChar.addEventListener('characteristicvaluechanged', handleGlucoseData);
+
+                    // 2. Setup Listener RACP (Penting untuk Accu-Chek)
+                    let racpChar = null;
+                    try {
+                        racpChar = await service.getCharacteristic(RACP_CHAR);
+                        await racpChar.startNotifications();
+                    } catch(err) { console.log("RACP tidak tersedia, menunggu data live..."); }
+
+                    // 3. KIRIM PERINTAH: "KIRIM SEMUA DATA"
+                    if(racpChar) {
+                        statusText.innerText = "Meminta riwayat data dari alat...";
+                        // OpCode 1 (Report stored records), Operator 1 (All records)
+                        const command = new Uint8Array([1, 1]);
+                        await racpChar.writeValue(command);
+                    } else {
+                        statusText.innerText = "Siap. Lakukan tes baru di alat...";
+                    }
+                    
+                    statusText.style.color = "#007bff";
+                    return; // Stop disini jika sudah ketemu Accu-Chek
+                } catch (e) { 
+                    console.log("Bukan Accu-Chek/Gagal RACP: " + e);
+                }
+
+                // --- B. CEK TENSI (OMRON) ---
+                try {
+                    const service = await server.getPrimaryService(BLOOD_PRESSURE_SERVICE);
+                    const characteristic = await service.getCharacteristic(BP_MEASUREMENT_CHAR);
+                    await characteristic.startNotifications();
+                    characteristic.addEventListener('characteristicvaluechanged', handleBPData);
+                    statusText.innerText = "Siap menerima data Tensi...";
+                } catch (e) {}
+
+                // --- C. CEK TIMBANGAN ---
+                try {
+                    const service = await server.getPrimaryService(WEIGHT_SCALE_SERVICE);
+                    const characteristic = await service.getCharacteristic(WEIGHT_MEASUREMENT_CHAR);
+                    await characteristic.startNotifications();
+                    characteristic.addEventListener('characteristicvaluechanged', handleWeightData);
+                    statusText.innerText = "Siap menerima data Berat Badan...";
+                } catch (e) {}
+
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "Gagal/Batal: " + error.message;
+                statusText.style.color = "red";
+            }
+        });
+    }
+
+    // --- HANDLER GLUKOSA (ACCU-CHEK) ---
+    function handleGlucoseData(event) {
+        const value = event.target.value;
+        const flags = value.getUint8(0);
+        const timeOffsetPresent = (flags & 0x01) === 1;
+        const concentrationUnit = (flags & 0x04) === 1; // 0=kg/L (mg/dL), 1=mol/L
+
+        let offset = 1; // Lewati Flags
+        offset += 2;    // Lewati Sequence Number
+        offset += 7;    // Lewati Base Time
+
+        if (timeOffsetPresent) {
+            offset += 2; // Lewati Time Offset
+        }
+
+        // Cek apakah data valid di offset ini
+        if (offset + 2 > value.byteLength) return;
+
+        // Baca Nilai (SFLOAT)
+        const sfloat = value.getUint16(offset, true);
+        const mantissa = sfloat & 0x0FFF;
+        const exponent = sfloat >> 12;
+        
+        let signedMantissa = mantissa;
+        if (signedMantissa >= 0x0800) signedMantissa = -((0x1000) - signedMantissa);
+
+        let signedExponent = exponent;
+        if (signedExponent >= 0x08) signedExponent = -((0x10) - signedExponent);
+
+        let glucoseVal = signedMantissa * Math.pow(10, signedExponent);
+
+        // Konversi Unit
+        if (concentrationUnit) {
+            glucoseVal = glucoseVal * 18 * 1000; // mol/L to mg/dL (approx)
+        } else {
+            glucoseVal = glucoseVal * 100000; // kg/L to mg/dL
+        }
+
+        const finalGlucose = Math.round(glucoseVal);
+
+        if (finalGlucose > 10) {
+            document.getElementById('Glucose').value = finalGlucose;
+            // PERBAIKAN SINTAKS: Menggunakan backticks
+            statusText.innerText = `Data Diterima: ${finalGlucose} mg/dL`;
+            statusText.style.color = "green";
+            if(glucoseSourceLabel) glucoseSourceLabel.style.display = "block";
+            highlightInput('Glucose');
+        }
+    }
+
+    // --- HANDLER TENSI ---
+    function handleBPData(event) {
+        const value = event.target.value;
+        let systolic = value.getUint8(1); 
+        let diastolic = value.getUint8(3);
+        if (systolic < 50) { 
+             systolic = value.getUint16(1, true); 
+             diastolic = value.getUint16(3, true); 
+        }
+        if (systolic > 50) {
+            document.getElementById('BloodPressure').value = systolic;
+            // PERBAIKAN SINTAKS
+            statusText.innerText = `Data Tensi: ${systolic}/${diastolic} mmHg`;
+            statusText.style.color = "green";
+            if(bpSourceLabel) bpSourceLabel.style.display = "block";
+            highlightInput('BloodPressure');
+        }
+    }
+
+    // --- HANDLER TIMBANGAN ---
+    function handleWeightData(event) {
+        const value = event.target.value;
+        const flags = value.getUint8(0);
+        const isImperial = (flags & 0x01) === 1;
+        let rawWeight = value.getUint16(1, true);
+        let weight = rawWeight / 200; 
+        if (weight < 5) weight = rawWeight / 100; 
+        if (isImperial) weight = weight * 0.453592;
+
+        document.getElementById('weight').value = weight.toFixed(1);
+        // PERBAIKAN SINTAKS
+        statusText.innerText = `Data Berat: ${weight.toFixed(1)} kg`;
+        statusText.style.color = "green";
+        if(weightSourceLabel) weightSourceLabel.style.display = "block";
+        if(window.updateBMI) window.updateBMI();
+        highlightInput('weight');
+    }
+
+    // --- HELPER VISUAL ---
+    function highlightInput(id) {
+        const el = document.getElementById(id);
+        if(el) {
+            el.style.backgroundColor = "#d4edda";
+            setTimeout(() => el.style.backgroundColor = "", 1500);
+        }
+    }
+
+    // --- PDF UPLOAD ---
+    const pdfInput = document.getElementById('pdfUpload');
+    const modal = document.getElementById('passwordModal');
+    const closeModal = document.querySelector('.close-modal');
+    const submitPassBtn = document.getElementById('submitPasswordBtn');
+    const passInput = document.getElementById('pdfPasswordInput');
+    const passError = document.getElementById('passwordError');
+    let currentFile = null;
+
+    if(pdfInput){
+        pdfInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                currentFile = this.files[0];
+                uploadPdf(currentFile);
+            }
+        });
+    }
+
+    if(submitPassBtn){
+        submitPassBtn.addEventListener('click', function() {
+            if (currentFile && passInput.value) {
+                passError.style.display = 'none';
+                uploadPdf(currentFile, passInput.value);
+            } else {
+                passError.innerText = "Password kosong.";
+                passError.style.display = 'block';
+            }
+        });
+    }
+
+    function uploadPdf(file, password = null) {
+        const formData = new FormData();
+        formData.append('medical_record', file);
+        if (password) formData.append('pdf_password', password);
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.innerText = password ? "Mencoba membuka..." : "Memeriksa file...";
+        
+        fetch('/upload_pdf', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'encrypted_needed') {
+                modal.style.display = "block"; statusDiv.innerText = "Terkunci password.";
+            } else if (data.status === 'success') {
+                modal.style.display = "none"; statusDiv.innerText = "✓ " + data.message; statusDiv.style.color = "green";
+                if (data.extracted_data) fillForm(data.extracted_data);
+            } else if (data.error) {
+                statusDiv.innerText = "Error: " + data.error; statusDiv.style.color = "red";
+            } else if (data.status === 'encrypted_error') {
+                 passError.innerText = "Password salah."; passError.style.display = 'block';
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function fillForm(extracted) {
+        const mapping = {
+            'height': 'height', 'weight': 'weight', 'BMI': 'bmi_display',
+            'Pregnancies': 'Pregnancies', 'Glucose': 'Glucose',
+            'BloodPressure': 'BloodPressure', 'Cholesterol': 'Cholesterol',
+            'SkinThickness': 'SkinThickness', 'Insulin': 'Insulin',
+            'DiabetesPedigreeFunction': 'DiabetesPedigreeFunction', 'Age': 'Age'
+        };
+        Object.keys(extracted).forEach(k => {
+            const id = mapping[k];
+            if (id) {
+                const el = document.getElementById(id);
+                if(el) {
+                    let val = String(extracted[k]).replace(',', '.');
+                    if(k === 'Age') val = val.replace(/\D/g, '');
+                    el.value = val;
+                    highlightInput(id);
+                }
+            }
+        });
+        updateBMI();
+    }
+
+    // --- PREDIKSI SUBMIT ---
+    document.getElementById('prediction-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const resultPanel = document.querySelector('.result-panel');
+        
+        loadingDiv.style.display = 'block'; 
+        resultDiv.innerHTML = ''; 
+        resultDiv.classList.remove('result-visible'); 
+        resultPanel.style.display = 'block';
+        
+        const formData = new FormData(this);
+        
+        fetch('/predict', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            loadingDiv.style.display = 'none';
+            if (data.error) { 
+                // PERBAIKAN SINTAKS: Menggunakan backticks
+                resultDiv.innerHTML = `<p style="color:red; text-align:center">Error: ${data.error}</p>`; 
+                return; 
+            }
+            
+            // PERBAIKAN SINTAKS: Menggunakan backticks untuk HTML string
+            let cardsHtml = `<div class="detail-summary-grid" style="grid-template-columns: repeat(3, 1fr); gap:1rem;">`;
+            if(data.diabetes) cardsHtml += createCard('Diabetes', 'tint', data.diabetes);
+            if(data.heart) cardsHtml += createCard('Jantung', 'heartbeat', data.heart);
+            if(data.stroke) cardsHtml += createCard('Stroke', 'brain', data.stroke);
+            cardsHtml += `</div>`;
+            
+            const barChartHtml = data.clinical_bar_chart ? `<div class="chart-section" style="margin-top:2rem;"><h4 style="margin-bottom:1rem;">Analisis Klinis</h4><img src="data:image/png;base64,${data.clinical_bar_chart}" class="plot-image" style="width:100%; border-radius:8px;"></div>` : '';
+            const pieChartHtml = data.pie_chart ? `<div class="chart-section" style="margin-top:2rem;"><h4 style="margin-bottom:1rem;">Distribusi Risiko</h4><img src="data:image/png;base64,${data.pie_chart}" class="plot-image" style="width:100%; max-width:400px; display:block; margin:auto; border-radius:8px;"></div>` : '';
+            
+            resultDiv.innerHTML = `
+                <div class="risk-section" style="padding: 2rem;">
+                    <h3 style="margin-bottom:1.5rem; border-bottom:2px solid #eee; padding-bottom:0.5rem;">Hasil Analisis AI Komprehensif</h3>
+                    ${cardsHtml}
+                    <div class="clinical-summary-grid" style="margin-top:2rem;">
+                        ${barChartHtml}${pieChartHtml}
+                    </div>
+                    <div style="margin-top:2rem; padding:1.5rem; background:#f8f9fa; border-radius:8px; border-left:5px solid #007bff;">
+                        <h4 style="margin-top:0; color:#0056b3;"><i class="fas fa-user-md"></i> Rekomendasi Medis</h4>
+                        <p style="line-height:1.6;">${data.rekomendasi}</p>
+                    </div>
+                    <div style="margin-top:2rem; text-align:center;">
+                        <button class="cta-button reset-btn" onclick="location.reload()" style="background:#6c757d;">
+                            <i class="fas fa-redo"></i> Analisis Ulang
+                        </button>
+                    </div>
+                </div>`;
+            
+            resultDiv.classList.add('result-visible'); 
+            resultPanel.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(err => { 
+            console.error(err); 
+            loadingDiv.style.display = 'none'; 
+        });
+    });
+
+    function createCard(title, icon, data) {
+        // PERBAIKAN SINTAKS: Menggunakan backticks
+        return `<div class="summary-card" style="border-top: 4px solid ${data.color}; padding:1.5rem; background:white; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:8px;">
+            <h4 style="margin-top:0; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-${icon}"></i> ${title}
+            </h4>
+            <div class="detail-value" style="color:${data.color}; font-size:1.8rem; font-weight:bold; margin:10px 0;">
+                ${data.risk}
+            </div>
+            <small style="color:#666;">${data.label}</small>
+        </div>`;
+    }
+
+    if(closeModal) closeModal.addEventListener('click', () => modal.style.display = "none");
+</script>
+
+</body>
+</html>
