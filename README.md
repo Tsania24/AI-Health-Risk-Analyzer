@@ -3,6 +3,7 @@
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue?style=for-the-badge&logo=python)
 ![Framework](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
 ![Library](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![IoT](https://img.shields.io/badge/IoT-Bluetooth_Integration-0082FC?style=for-the-badge&logo=bluetooth&logoColor=white)
 ![Status](https://img.shields.io/badge/status-Final%20Project-success?style=for-the-badge)
 
 > **Expert System & Machine Learning for Early Detection of Diabetes, Heart Disease, and Stroke Risks.**
@@ -25,31 +26,37 @@
 
 **MediCare** is an intelligent web-based application designed to assist users in performing early health screening. The application utilizes the **Random Forest Classifier** algorithm to predict disease risk probabilities based on medical parameters (such as BMI, Glucose, Blood Pressure, etc.).
 
-The system features a distinct **Smart PDF Parsing** capability, allowing users to upload lab results (PDF format). The system automatically extracts medical data using *Regular Expressions (Regex)*, eliminating the need for manual input.
+The system bridges the gap between hardware and software by featuring **IoT Integration** and **Smart PDF Parsing**. Users can automatically sync data from medical devices or upload lab results, eliminating the need for manual input and ensuring high data accuracy.
 
 ---
 
 ## 🚀 Key Features
 
-### 1. 🔍 Multi-Disease Prediction
+### 1. 📡 IoT Smart Device Integration (Bluetooth)
+Seamless hardware connectivity for real-time data synchronization.
+* **Omron Digital Blood Pressure Monitor:** Automatically fetches Systolic/Diastolic blood pressure data via Bluetooth.
+* **Accu-Chek Instant Blood Glucose Meter:** Syncs blood sugar levels directly into the web input fields.
+* *Benefit:* Reduces human error in data entry and provides a seamless user experience.
+
+### 2. 🔍 Multi-Disease Prediction
 Risk analysis for 3 critical diseases in a single process:
 * **Diabetes:** Predictions based on Glucose, BMI, Age, etc.
 * **Heart Disease:** Analysis of Chest Pain, Cholesterol, Max Heart Rate.
 * **Stroke:** Analysis of Smoking Status, Hypertension, and Medical History.
 
-### 2. 📄 Smart PDF Extractor (OCR-like)
+### 3. 📄 Smart PDF Extractor (OCR-like)
 Advanced feature for reading digital medical records (PDF).
 * Utilizes the `PyPDF2` library.
 * Intelligent keyword search algorithm (Regex) to detect values: *Fasting Glucose, Total Cholesterol, Blood Pressure*.
 * Supports Password Protected PDFs.
 
-### 3. 📊 Interactive Data Visualization
+### 4. 📊 Interactive Data Visualization
 Displays analysis results not just as text, but as visual charts:
 * **Risk Chart:** Bar chart showing risk probability per disease.
 * **Health Meter:** Visual indicator of health status (Healthy / Warning / Danger).
 * **Recommendations:** Automated medical advice tailored to prediction results.
 
-### 4. 🖨️ Generate PDF Report
+### 5. 🖨️ Generate PDF Report
 Users can download the complete analysis result as a PDF document (`laporan_hasil_analisis.pdf`) containing the medical summary and risk charts for doctor consultation.
 
 ---
@@ -62,6 +69,7 @@ This project is built using the following *Tech Stack*:
 | :--- | :--- | :--- |
 | **Backend** | Python & Flask | Server-side logic and API routing (`app.py`) |
 | **ML Model** | Scikit-Learn | Random Forest Algorithm & Preprocessing (`train_models.py`) |
+| **IoT Connectivity** | **Web Bluetooth API** | Protocol to connect Omron & Accu-Chek devices to browser |
 | **Data Processing** | Pandas & NumPy | CSV dataset manipulation and numerical calculations |
 | **PDF Handling** | PyPDF2 | Text extraction from lab result PDF files |
 | **Visualization** | Matplotlib | Generating static charts for reports |
